@@ -1,0 +1,1 @@
+# Hakaton 2025 - Task 8
