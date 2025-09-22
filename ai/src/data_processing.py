@@ -46,7 +46,7 @@ def load_dicom_series(path):
 
 def find_air_water_peaks_clean(pixels,
                                bin_width=4,
-                               reserved_values=(-2048, 0),  # игнорируем паддинги
+                               reserved_values=(-2048, 0), 
                                min_fraction=0.001,
                                target_distance=1000,
                                tolerance=200,
@@ -97,9 +97,10 @@ def find_air_water_peaks_clean(pixels,
     return float(air), float(water)
 
 
-def shift_hu(pixels, air, water):
+def shift_hu(pixels, air, water, water_point=0, eps=30):
     pixels = np.copy(pixels)
-    pixels = pixels - water
+    if not -eps <= water <= eps:
+        pixels = pixels - water
     return pixels
 
 
