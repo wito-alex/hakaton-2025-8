@@ -109,9 +109,7 @@ def clip_hu(pixels, hu_min=-1024, hu_max=3000):
     return pixels
 
 
-def normalize_hu_minmax(pixels, out_range=(0.0, 1.0)):
-    hu_min = pixels.min()
-    hu_max = pixels.max()
+def normalize_hu_minmax(pixels, hu_min=-1024, hu_max=3000, out_range=(0.0, 1.0)):
     min_out, max_out = out_range
     norm = (pixels - hu_min) / (hu_max - hu_min)
     norm = norm * (max_out - min_out) + min_out
