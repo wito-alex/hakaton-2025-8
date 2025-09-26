@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from drf_spectacular.utils import extend_schema_field
 from .models import Scan
 
 
@@ -11,3 +10,9 @@ class ScanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Scan
         fields = '__all__'
+
+
+class ScanCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Scan
+        fields = ('name', 'file', 'markup_file')
