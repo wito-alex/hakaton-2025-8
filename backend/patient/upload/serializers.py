@@ -1,5 +1,6 @@
-from drf_chunked_upload.serializers import ChunkedUploadSerializer
 from rest_framework import serializers
+
+from drf_chunked_upload.serializers import ChunkedUploadSerializer
 
 from patient.models import Scan
 from patient.upload.models import ScanUploadChunked
@@ -24,7 +25,6 @@ class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
 
     class Meta(ChunkedUploadSerializer.Meta):
         model = ScanUploadChunked
-
 
     def create(self, validated_data):
         scan_data = validated_data.pop("scan")

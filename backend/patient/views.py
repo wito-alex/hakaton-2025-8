@@ -1,19 +1,22 @@
 from rest_framework import viewsets
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import FormParser, MultiPartParser
+
 from drf_spectacular.utils import extend_schema
+
 from .models import Scan
-from .serializers import ScanSerializer, ScanCreateUpdateSerializer
+from .serializers import ScanCreateUpdateSerializer, ScanSerializer
 
 
 class ScanViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows scans to be viewed or edited.
     """
+
     queryset = Scan.objects.all()
     parser_classes = (MultiPartParser, FormParser)
 
     def get_serializer_class(self):
-        if self.action in ['create', 'update', 'partial_update']:
+        if self.action in ["create", "update", "partial_update"]:
             return ScanCreateUpdateSerializer
         return ScanSerializer
 

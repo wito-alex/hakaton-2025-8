@@ -1,7 +1,7 @@
-from drf_chunked_upload.views import ChunkedUploadView
-from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import permissions
 
+from drf_chunked_upload.views import ChunkedUploadView
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 
 from .models import ScanUploadChunked
 from .serializers import ScanUploadChunkedSerializer, ScanUploadChunkedSerializersss
@@ -37,7 +37,6 @@ class ScanUploadChunkedView(ChunkedUploadView):
             ),
         ],
     )
-
     def put(self, request, pk=None, *args, **kwargs):
         return super().put(request, pk=pk, *args, **kwargs)
 
