@@ -42,6 +42,7 @@ ADD_APPS = [
 INSTALL_PACKAGE_APPS = [
     "rest_framework",
     "drf_spectacular",
+    "corsheaders",
 ]
 
 
@@ -57,6 +58,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -165,3 +167,6 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     # OTHER SETTINGS
 }
+
+# CORS settings for development
+CORS_ALLOW_ALL_ORIGINS = True

@@ -13,7 +13,6 @@ class ScanCreateSerializer(serializers.Serializer):
 
 
 class ScanUploadChunkedSerializersss(ChunkedUploadSerializer):
-    viewname = "upload_details"
 
     class Meta(ChunkedUploadSerializer.Meta):
         model = ScanUploadChunked
@@ -21,7 +20,6 @@ class ScanUploadChunkedSerializersss(ChunkedUploadSerializer):
 
 class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
     scan = serializers.JSONField(default={"file": "Name"})
-    viewname = "upload_details"
 
     class Meta(ChunkedUploadSerializer.Meta):
         model = ScanUploadChunked
