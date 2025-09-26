@@ -9,6 +9,7 @@ dependencies = [
     "django>=5.2.6",
     "django-environ>=0.12.0",
     "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt>=5.5.1",
     "drf-chunked-upload>=0.6.0",
     "drf-spectacular>=0.28.0",
     "gunicorn>=23.0.0",
@@ -16,3 +17,92 @@ dependencies = [
     "pytils>=0.4.4",
     "redis>=6.4.0",
 ]
+
+[dependency-groups]
+def = [
+    "pre-commit>=4.3.0",
+]
+
+[tool.autoflake]
+check = false
+imports = ["django", "requests", "urllib3"]
+
+
+[tool.isort]
+profile = "black"
+skip_glob=["migrations"]
+skip=["migrations"]
+default_section = "THIRDPARTY"
+known_django = ["django", "hcaptcha_field", "easy_thumbnails", "pytils", "ckeditor", "seo", "rest_framework",
+    "aiogram", "requests","extra_settings","celery"]
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.ruff]
+# Enable Pyflakes `E` and `F` codes by default.
+select = [
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    #    "I", # isort
+    "C", # flake8-comprehensions
+    #    "B", # flake8-bugbear
+    #    "ERA", # eradicate
+    "S" # bandit
+]
+ignore = [
+    "E402", # E402 Module level import not at top of file
+    "E501", # line too long, handled by black
+    "B008", # do not perform function calls in argument defaults
+    "C901", # too complex
+    "F405", # F405 `admin` may be undefined, or defined from star imports: `cinema_app.models`
+    "S101", # S101 Use of `assert` detected
+    "S104", # S104 Possible binding to all interfaces
+    #    "E203", # E203: Whitespace before ':' (pycqa/pycodestyle#373)
+    #    "SIM106", # SIM106: Handle error-cases first
+    "ANN101", # ANN101: Missing type annotation for self in method
+    "ANN102", # ANN102: Missing type annotation for cls in classmethod
+    #    "PIE781", # PIE781: assign-and-return
+    #    "PIE798", # PIE798 no-unnecessary-class: Consider using a module for namespacing instead
+] # https://pypi.org/project/ruff/#isort-i
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["A", "B", "C", "D", "E", "F", ]
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "migrations"
+]
+per-file-ignores = { }
+
+# Same as Black.
+line-length = 88
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.10.
+target-version = "py39"
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
