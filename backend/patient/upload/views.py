@@ -48,4 +48,11 @@ class ScanUploadChunkedView(ChunkedUploadView):
         return serializer_class
 
     def post(self, request, pk=None, *args, **kwargs):
-        return super().post(request, pk, *args, **kwargs)
+        data = super().post(request, pk, *args, **kwargs)
+
+        chunked_upload = self.get_object()
+        scan_instance = chunked_upload.scan
+        scan_instance.file = chunked_upload.file
+        scan_instance.save(update_fields=['file'])
+
+        return data
