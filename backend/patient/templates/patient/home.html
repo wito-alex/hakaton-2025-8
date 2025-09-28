@@ -11,146 +11,196 @@
         <input type="password" id="password" placeholder="Password" value="admin">
         <button id="loginButton">Login</button>
     </div>
-    <div id="token"></div>
+    <div id="token-status"></div>
     <hr>
 
     <h3 class="title">
         Upload Scan
     </h3>
-    <input id="chunked_upload" type="file" name="file">
-    <p id="progress"></p>
-    <div class="output" id="messages"></div>
+    <div>
+        <label for="scanIdInput">Scan ID to associate with:</label>
+        <input type="number" id="scanIdInput" value="1">
+    </div>
+    <br>
+    <input type="file" id="fileInput">
+    <button id="uploadButton">Upload</button>
+    <div id="progress"></div>
 {% endblock %}
 
 
 {% block javascript %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/10.7.0/js/jquery.iframe-transport.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/10.7.0/js/jquery.fileupload.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/spark-md5/3.0.2/spark-md5.min.js"></script>
 
     <script type="text/javascript">
+        const fileInput = document.getElementById('fileInput');
+        const uploadButton = document.getElementById('uploadButton');
+        const progressDiv = document.getElementById('progress');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('loginButton');
+        const tokenDiv = document.getElementById('token-status');
+        const scanIdInput = document.getElementById('scanIdInput');
+
+        const CHUNK_SIZE = 1024 * 1024 * 5; // 1MB
+        const UPLOAD_URL = '/api/patient/scans/upload/';
+        const TOKEN_URL = '/api/token/';
+
         let accessToken = null;
-        let md5 = "";
 
-        $('#loginButton').on('click', function() {
-            const username = $('#username').val();
-            const password = $('#password').val();
+        loginButton.addEventListener('click', async () => {
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+            tokenDiv.innerText = 'Logging in...';
+            try {
+                const response = await fetch(TOKEN_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                });
 
-            $.ajax({
-                type: 'POST',
-                url: '/api/token/',
-                contentType: 'application/json',
-                data: JSON.stringify({ username, password }),
-                success: function(data) {
-                    accessToken = data.access;
-                    $('#token').text('Logged in successfully!');
-                },
-                error: function(xhr) {
-                    $('#token').text('Login failed: ' + (xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : xhr.responseText));
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(JSON.stringify(errorData));
                 }
+
+                const data = await response.json();
+                accessToken = data.access;
+                tokenDiv.innerText = 'Logged in successfully!';
+                tokenDiv.style.color = 'green';
+            } catch (error) {
+                tokenDiv.innerText = `Login failed: ${error.message}`;
+                tokenDiv.style.color = 'red';
+                console.error('Login failed:', error);
+            }
+        });
+
+        const calculateMD5 = (file, callback) => {
+            const blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice;
+            const chunks = Math.ceil(file.size / CHUNK_SIZE);
+            let currentChunk = 0;
+            const spark = new SparkMD5.ArrayBuffer();
+            const fileReader = new FileReader();
+
+            fileReader.onload = (e) => {
+                spark.append(e.target.result);
+                currentChunk++;
+                progressDiv.innerText = `Calculating MD5: ${Math.round((currentChunk/chunks)*100)}%`;
+                if (currentChunk < chunks) {
+                    loadNextChunk();
+                } else {
+                    callback(spark.end());
+                }
+            };
+            fileReader.onerror = () => {
+                console.error('MD5 calculation failed');
+                progressDiv.innerText = 'Error calculating MD5.';
+                progressDiv.style.color = 'red';
+            };
+            const loadNextChunk = () => {
+                const start = currentChunk * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, file.size);
+                fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
+            };
+            loadNextChunk();
+        };
+
+        uploadButton.addEventListener('click', () => {
+            if (!accessToken) {
+                progressDiv.innerText = 'Please log in first.';
+                progressDiv.style.color = 'orange';
+                return;
+            }
+            const file = fileInput.files[0];
+            if (!file) {
+                progressDiv.innerText = 'Please select a file.';
+                progressDiv.style.color = 'orange';
+                return;
+            }
+
+            progressDiv.innerText = 'Calculating MD5 checksum...';
+            progressDiv.style.color = 'black';
+
+            calculateMD5(file, (md5) => {
+                progressDiv.innerText = `MD5: ${md5}. Starting upload...`;
+                startUpload(file, md5);
             });
         });
 
-        function calculate_md5(data, chunk_size) {
-            var blob_slice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
-                file = data.files[0],
-                chunks = Math.ceil(file.size / chunk_size),
-                current_chunk = 0,
-                spark = new SparkMD5.ArrayBuffer(),
-                fileReader = new FileReader();
-
-            fileReader.onload = function (e) {
-                spark.append(e.target.result);
-                current_chunk++;
-
-                if (current_chunk < chunks) {
-                    read_next_chunk();
-                } else {
-                    md5 = spark.end();
-                    data.submit();
-                }
-            };
-            fileReader.onerror = function () {
-                console.warn('oops, something went wrong.');
-            };
-
-            function read_next_chunk() {
-                var start = current_chunk * chunk_size,
-                    end = Math.min(start + chunk_size, file.size);
-                fileReader.readAsArrayBuffer(blob_slice.call(file, start, end));
-            };
-
-            read_next_chunk();
-        }
-
-        var chunk_size = 1024 * 1024; // 1MB
-        var formData= [
-            {'name':'filename', 'value':'filename.zip'}
-        ];
-
-        $("#chunked_upload").fileupload({
-            url: "/api/patient/scans/upload/",
-            type: "PUT",
-            dataType: "json",
-            maxChunkSize: chunk_size,
-            formData: formData,
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Range': 'bytes 0-499999/'+chunk_size,
-            },
-            add: function (e, data) {
-                if (!accessToken) {
-                    alert('Please log in first.');
-                    return;
-                }
-                $("#messages").empty();
-                data.formData = {
-                    scan: 1,
-                    filename: data.files[0].name
-                };
-                // Обновляем заголовки перед началом загрузки
-                const first_chunk_end = Math.min(chunk_size, data.files[0].size);
-                $(this).fileupload('option', 'headers', {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Range': `bytes 0-${first_chunk_end - 1}/${data.files[0].size}`
-                });
-                calculate_md5(data, chunk_size);
-            },
-            chunkdone: function (e, data) {
-                // Логика Content-Range, перенесенная из example/home.html
-                var next_start = data.loaded;
-                var next_end = Math.min(next_start + chunk_size, data.total);
-                var range = `bytes ${next_start}-${next_end - 1}/${data.total}`;
-                $(this).fileupload('option', 'headers')['Content-Range'] = range;
-
-                $("#messages").append($('<p>').text('Chunk uploaded: ' + JSON.stringify(data.result)));
-                var progress = parseInt(data.loaded / data.total * 100.0, 10);
-                $("#progress").text('Progress: ' + progress + "%");
-            },
-            done: function (e, data) {
-                $("#messages").append($('<p>').text('Upload finished, finalizing...'));
-                $.ajax({
-                    type: "POST",
-                    url: data.result.url,
-                    contentType: 'application/json',
-                    formData: formData,
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    data: JSON.stringify({ md5: md5 }),
-                    success: function (data) {
-                        $("#messages").append($('<p>').text('Finalization complete: ' + JSON.stringify(data)));
-                    },
-                    error: function(xhr) {
-                        $("#messages").append($('<p style="color:red">').text('Finalization failed: ' + (xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : xhr.responseText)));
-                    }
-                });
-            },
-            fail: function (e, data) {
-                $("#messages").append($('<p style="color:red">').text('Upload failed: ' + (data.jqXHR.responseJSON ? JSON.stringify(data.jqXHR.responseJSON) : data.jqXHR.responseText)));
+        async function startUpload(file, md5) {
+            const scanId = scanIdInput.value;
+            if (!scanId) {
+                progressDiv.innerText = 'Scan ID is required.';
+                return;
             }
-        });
+
+            const totalSize = file.size;
+            let start = 0;
+            let uploadUrl = UPLOAD_URL; // First request goes to the base URL
+            let isFirstChunk = true;
+
+            try {
+                while (start < totalSize) {
+                    const end = Math.min(start + CHUNK_SIZE, totalSize);
+                    const chunk = file.slice(start, end);
+                    const contentRange = `bytes ${start}-${end - 1}/${totalSize}`;
+
+                    progressDiv.innerText = `Uploading chunk... ${Math.round((end/totalSize)*100)}%`;
+
+                    const formData = new FormData();
+                    formData.append('file', chunk);
+                    formData.append('filename', file.name);
+
+                    // Add scan ID only to the first chunk's request
+                    if (isFirstChunk) {
+                        formData.append('scan', scanId);
+                    }
+
+                    const chunkResponse = await fetch(uploadUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Range': contentRange,
+                            'Authorization': `Bearer ${accessToken}`,
+                        },
+                        body: formData,
+                    });
+
+                    if (!chunkResponse.ok) {
+                        const errorData = await chunkResponse.json();
+                        throw new Error(`Chunk upload failed: ${JSON.stringify(errorData)}`);
+                    }
+
+                    const responseData = await chunkResponse.json();
+                    uploadUrl = responseData.url; // Use the new URL for subsequent chunks
+                    isFirstChunk = false;
+                    start = end;
+                }
+
+                // Finalize upload
+                progressDiv.innerText = 'Finalizing upload...';
+                const finalResponse = await fetch(uploadUrl, { // Use the last received URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`,
+                    },
+                    body: JSON.stringify({ md5: md5 }),
+                });
+
+                if (!finalResponse.ok) {
+                    const errorData = await finalResponse.json();
+                    throw new Error(`Finalization failed: ${JSON.stringify(errorData)}`);
+                }
+                
+                const finalData = await finalResponse.json();
+                progressDiv.innerText = 'Upload complete!';
+                progressDiv.style.color = 'green';
+                console.log('Final response:', finalData);
+
+            } catch (error) {
+                progressDiv.innerText = `Error: ${error.message}`;
+                progressDiv.style.color = 'red';
+                console.error('Upload failed:', error);
+            }
+        }
     </script>
 {% endblock %}
