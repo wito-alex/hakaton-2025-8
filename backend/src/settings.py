@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -184,3 +185,14 @@ SPECTACULAR_SETTINGS = {
 
 # CORS settings for development
 CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
+
+# Chunked Upload
+DRF_CHUNKED_UPLOAD_EXPIRATION_DELTA = timedelta(days=1)
+DRF_CHUNKED_UPLOAD_PATH = os.path.join("zip")
+DRF_CHUNKED_UPLOAD_MIN_BYTES = 0
+DRF_CHUNKED_UPLOAD_MAX_BYTES = 5 * 1024 * 1024 * 1024  # max size of 5 GB
+DRF_CHUNKED_ALLOWED_MIMETYPES = ["image/zip"]
+DRF_CHUNKED_UPLOAD_COMPLETE_EXT = ".zip"
+

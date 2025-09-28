@@ -15,7 +15,9 @@ class MixinUpdateAt(models.Model):
         abstract = True
 
 
+
 class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
+    objects = models.Manager()
     class StatusType(models.TextChoices):
         preparing_for_viewing = (
             "preparing_for_viewing",
@@ -44,7 +46,7 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
 
     name = models.CharField(verbose_name="Название", max_length=255)
     file = models.FileField(
-        verbose_name="Файл", upload_to="uploads/scan"
+        verbose_name="Файл", upload_to="uploads/scan", blank=True, null=True
     )
     status = models.CharField(
         verbose_name="Статус",

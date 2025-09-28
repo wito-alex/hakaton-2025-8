@@ -1,3 +1,5 @@
+from http.client import HTTPException
+
 from rest_framework import serializers
 
 from drf_chunked_upload.serializers import ChunkedUploadSerializer
@@ -13,7 +15,7 @@ class ScanCreateSerializer(serializers.Serializer):
 
 
 class ScanUploadChunkedSerializersss(ChunkedUploadSerializer):
-    viewname = "scan-upload-detail"
+    viewname = "upload_details"
 
     class Meta(ChunkedUploadSerializer.Meta):
         model = ScanUploadChunked
@@ -21,9 +23,14 @@ class ScanUploadChunkedSerializersss(ChunkedUploadSerializer):
 
 class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
     scan = serializers.JSONField()
-    viewname = "scan-upload-detail"
+    viewname = "upload_details"
+
+    class Meta(ChunkedUploadSerializer.Meta):
+        model = ScanUploadChunked
 
     def create(self, validated_data):
         scan_data = validated_data.pop("scan")
-        scan = Scan.objects.create(**scan_data)
+
+        scan = Scan.objects.get(id=scan_data)
+            # scan = Scan.objects.create(**scan_data)
         return ScanUploadChunked.objects.create(scan=scan, **validated_data)
