@@ -23,6 +23,9 @@ class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
     scan = serializers.JSONField()
     viewname = "scan-upload-detail"
 
+    class Meta(ChunkedUploadSerializer.Meta):
+        model = ScanUploadChunked
+
     def create(self, validated_data):
         scan_data = validated_data.pop("scan")
         scan = Scan.objects.create(**scan_data)
