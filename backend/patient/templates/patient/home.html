@@ -1,0 +1,131 @@
+{% extends "patient/base.html" %}
+
+{% block content %}
+    <h1 class="title">
+        drf-chunked-upload
+    </h1>
+
+    <div>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button id="loginButton">Login</button>
+    </div>
+    <div id="token"></div>
+    <hr>
+
+    <h3 class="title">
+        Chunked Upload
+    </h3>
+    <input id="chunked_upload" type="file" name="file">
+    <p id="progress"></p>
+    <div class="output" id="messages"></div>
+{% endblock %}
+
+
+{% block javascript %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/10.7.0/js/jquery.iframe-transport.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/10.7.0/js/jquery.fileupload.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/spark-md5/3.0.2/spark-md5.min.js"></script>
+
+    <script type="text/javascript">
+        let accessToken = null;
+
+        $('#loginButton').on('click', function() {
+            const username = $('#username').val();
+            const password = $('#password').val();
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/token/',
+                contentType: 'application/json',
+                data: JSON.stringify({ username, password }),
+                success: function(data) {
+                    accessToken = data.access;
+                    $('#token').text('Logged in successfully!');
+                },
+                error: function(xhr) {
+                    $('#token').text('Login failed: ' + xhr.responseText);
+                }
+            });
+        });
+
+        var md5 = "";
+
+        function calculate_md5(data, chunk_size) {
+            var blob_slice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
+                file = data.files[0],
+                chunks = Math.ceil(file.size / chunk_size),
+                current_chunk = 0,
+                spark = new SparkMD5.ArrayBuffer(),
+                fileReader = new FileReader();
+
+            fileReader.onload = function (e) {
+                spark.append(e.target.result);
+                current_chunk++;
+
+                if (current_chunk < chunks) {
+                    read_next_chunk();
+                } else {
+                    md5 = spark.end();
+                    data.submit();
+                }
+            };
+
+            function read_next_chunk() {
+                var start = current_chunk * chunk_size,
+                    end = Math.min(start + chunk_size, file.size);
+                fileReader.readAsArrayBuffer(blob_slice.call(file, start, end));
+            };
+
+            read_next_chunk();
+        }
+
+        var chunk_size = 1024 * 1024; // 1MB
+
+        $("#chunked_upload").fileupload({
+            url: "/api/patient/scans/upload/",
+            type: "PUT",
+            dataType: "json",
+            maxChunkSize: chunk_size,
+            headers: function() {
+                return {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Range': this.headers['Content-Range']
+                };
+            },
+            add: function (e, data) {
+                if (!accessToken) {
+                    alert('Please log in first.');
+                    return;
+                }
+                $("#messages").empty();
+                data.formData = { scan: JSON.stringify({ name: data.files[0].name }) };
+                calculate_md5(data, chunk_size);
+            },
+            chunkdone: function (e, data) {
+                $("#messages").append($('<p>').text(JSON.stringify(data.result)));
+                var progress = parseInt(data.loaded / data.total * 100.0, 10);
+                $("#progress").text(Array(progress).join("=") + "> " + progress + "%");
+            },
+            done: function (e, data) {
+                $.ajax({
+                    type: "POST",
+                    url: data.result.url,
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    data: JSON.stringify({ md5: md5 }),
+                    success: function (data) {
+                        $("#messages").append($('<p>').text(JSON.stringify(data)));
+                    }
+                });
+            },
+            fail: function (e, data) {
+                $("#messages").append($('<p>').text(JSON.stringify(data.jqXHR.responseJSON)));
+            }
+        });
+    </script>
+{% endblock %}
