@@ -92,13 +92,26 @@ WSGI_APPLICATION = "src.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+DB_LOCAL = env.bool("DB_LOCAL", default=False)
 
+if DB_LOCAL:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": env.str("DJANGO_DB_ENGINE", None),
+            "NAME": env.str("DB_NAME", None),
+            "USER": env.str("DB_USER", None),
+            "PASSWORD": env.str("DB_PASSWORD", None),
+            "HOST": env.str("DB_HOST", None),
+            "PORT": env.str("DB_PORT", None),
+        },
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

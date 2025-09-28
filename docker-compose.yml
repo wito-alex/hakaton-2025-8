@@ -23,6 +23,17 @@ services:
       hk_db:
         condition: service_started
 
+  hk_create_superuser:
+    container_name: hakaton_2025_create_superuser
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py shell -c \"from django.contrib.auth import get_user_model; User = get_user_model(); not User.objects.filter(username='admin').exists() and User.objects.create_superuser('admin', 'admin@example.com', 'admin')\""
+    depends_on:
+      hk_migrate:
+        condition: service_completed_successfully
+
   hk_backend:
     container_name: hakaton_2025_back
     restart: always
@@ -39,10 +50,10 @@ services:
     depends_on:
       hk_db:
         condition: service_started
-      hk_migrate:
-        condition: service_completed_successfully
       hk_redis:
         condition: service_started
+      hk_create_superuser:
+        condition: service_completed_successfully
 
   hk_redis:
     container_name: hakaton_2025_redis
@@ -82,4 +93,4 @@ services:
       - "3000:3000"
     depends_on:
       hk_backend:
-        condition: service_completed_successfully
+        condition: service_started
