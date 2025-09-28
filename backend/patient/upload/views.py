@@ -10,7 +10,7 @@ from .serializers import ScanUploadChunkedSerializer, ScanUploadChunkedSerialize
 class ScanUploadChunkedView(ChunkedUploadView):
     model = ScanUploadChunked
     serializer_class = ScanUploadChunkedSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         return super().get_queryset()

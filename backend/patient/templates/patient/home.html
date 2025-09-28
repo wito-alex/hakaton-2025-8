@@ -1,4 +1,5 @@
 {% extends "patient/base.html" %}
+{% load static i18n %}
 
 {% block content %}
     <h1 class="title">
@@ -6,15 +7,15 @@
     </h1>
 
     <div>
-        <input type="text" id="username" placeholder="Username">
-        <input type="password" id="password" placeholder="Password">
+        <input type="text" id="username" placeholder="Username" value="admin">
+        <input type="password" id="password" placeholder="Password" value="admin">
         <button id="loginButton">Login</button>
     </div>
     <div id="token"></div>
     <hr>
 
     <h3 class="title">
-        Chunked Upload
+        Upload Scan
     </h3>
     <input id="chunked_upload" type="file" name="file">
     <p id="progress"></p>
@@ -31,6 +32,7 @@
 
     <script type="text/javascript">
         let accessToken = null;
+        let md5 = "";
 
         $('#loginButton').on('click', function() {
             const username = $('#username').val();
@@ -46,12 +48,10 @@
                     $('#token').text('Logged in successfully!');
                 },
                 error: function(xhr) {
-                    $('#token').text('Login failed: ' + xhr.responseText);
+                    $('#token').text('Login failed: ' + (xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : xhr.responseText));
                 }
             });
         });
-
-        var md5 = "";
 
         function calculate_md5(data, chunk_size) {
             var blob_slice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
@@ -72,6 +72,9 @@
                     data.submit();
                 }
             };
+            fileReader.onerror = function () {
+                console.warn('oops, something went wrong.');
+            };
 
             function read_next_chunk() {
                 var start = current_chunk * chunk_size,
@@ -83,17 +86,19 @@
         }
 
         var chunk_size = 1024 * 1024; // 1MB
+        var formData= [
+            {'name':'filename', 'value':'filename.zip'}
+        ];
 
         $("#chunked_upload").fileupload({
             url: "/api/patient/scans/upload/",
             type: "PUT",
             dataType: "json",
             maxChunkSize: chunk_size,
-            headers: function() {
-                return {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Range': this.headers['Content-Range']
-                };
+            formData: formData,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Range': 'bytes 0-499999/'+chunk_size,
             },
             add: function (e, data) {
                 if (!accessToken) {
@@ -101,30 +106,50 @@
                     return;
                 }
                 $("#messages").empty();
-                data.formData = { scan: JSON.stringify({ name: data.files[0].name }) };
+                data.formData = {
+                    scan: 1,
+                    filename: data.files[0].name
+                };
+                // Обновляем заголовки перед началом загрузки
+                const first_chunk_end = Math.min(chunk_size, data.files[0].size);
+                $(this).fileupload('option', 'headers', {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Range': `bytes 0-${first_chunk_end - 1}/${data.files[0].size}`
+                });
                 calculate_md5(data, chunk_size);
             },
             chunkdone: function (e, data) {
-                $("#messages").append($('<p>').text(JSON.stringify(data.result)));
+                // Логика Content-Range, перенесенная из example/home.html
+                var next_start = data.loaded;
+                var next_end = Math.min(next_start + chunk_size, data.total);
+                var range = `bytes ${next_start}-${next_end - 1}/${data.total}`;
+                $(this).fileupload('option', 'headers')['Content-Range'] = range;
+
+                $("#messages").append($('<p>').text('Chunk uploaded: ' + JSON.stringify(data.result)));
                 var progress = parseInt(data.loaded / data.total * 100.0, 10);
-                $("#progress").text(Array(progress).join("=") + "> " + progress + "%");
+                $("#progress").text('Progress: ' + progress + "%");
             },
             done: function (e, data) {
+                $("#messages").append($('<p>').text('Upload finished, finalizing...'));
                 $.ajax({
                     type: "POST",
                     url: data.result.url,
                     contentType: 'application/json',
+                    formData: formData,
                     headers: {
                         'Authorization': `Bearer ${accessToken}`
                     },
                     data: JSON.stringify({ md5: md5 }),
                     success: function (data) {
-                        $("#messages").append($('<p>').text(JSON.stringify(data)));
+                        $("#messages").append($('<p>').text('Finalization complete: ' + JSON.stringify(data)));
+                    },
+                    error: function(xhr) {
+                        $("#messages").append($('<p style="color:red">').text('Finalization failed: ' + (xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : xhr.responseText)));
                     }
                 });
             },
             fail: function (e, data) {
-                $("#messages").append($('<p>').text(JSON.stringify(data.jqXHR.responseJSON)));
+                $("#messages").append($('<p style="color:red">').text('Upload failed: ' + (data.jqXHR.responseJSON ? JSON.stringify(data.jqXHR.responseJSON) : data.jqXHR.responseText)));
             }
         });
     </script>

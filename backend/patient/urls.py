@@ -9,8 +9,8 @@ router.register(r"scans", ScanViewSet)
 
 urlpatterns = [
     path("home/", HomeView.as_view(), name="home"),
-    path("", include(router.urls)),
-    path("scans/upload/", ScanUploadChunkedView.as_view(), name="scan-upload"),
+    path("scans/upload/", ScanUploadChunkedView.as_view(), name="upload_data"),
     path("scan/upload/<str:pk>/", ScanUploadChunkedView.as_view(), name="upload_details"),
     path("scan/upload/complete/", ScanUploadChunkedView.as_view(), name="upload_compete"),
+    path("", include(router.urls)),
 ]
