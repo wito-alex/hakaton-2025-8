@@ -55,4 +55,5 @@ class ScanUploadChunkedView(ChunkedUploadView):
         scan_instance.file = chunked_upload.file
         scan_instance.save(update_fields=['file'])
 
+
         return data
