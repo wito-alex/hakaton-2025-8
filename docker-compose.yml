@@ -1,0 +1,55 @@
+services:
+  hk_db:
+    container_name: hakaton_2025_db
+    image: postgres:13.3
+    restart: always
+    hostname: postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: '${POSTGRES_DB}'
+      POSTGRES_USER: '${POSTGRES_USER}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+      POSTGRES_HOST: '${POSTGRES_HOST}'
+      POSTGRES_POST: '${POSTGRES_POST}'
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data/postgres/:/var/lib/postgresql/data
+  
+  hk_migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hakaton_2025_migrate
+    env_file:
+      - .env
+    command: >
+      bach -c "python manage.py migrate"
+
+  hk_backend:
+    container_name: hakaton_2025_back
+    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: sh -c "python manage.py runserver 0.0.0.0:6000"
+    volumes:
+      - ./backend:/home/backend
+    ports:
+      - "6000:6000"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+#    depends_on:
+#      - db
+#      - redis
+#
+#  hk_fronted:
+#    container_name: hakaton_2025_front
+#    restart: always
+#
+#  hk_ai:
+#    container_name: hakatok_2025_ai
+#    restart: always
