@@ -6,17 +6,11 @@ services:
     hostname: postgres
     env_file:
       - .env
-    environment:
-      POSTGRES_DB: '${POSTGRES_DB}'
-      POSTGRES_USER: '${POSTGRES_USER}'
-      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
-      POSTGRES_HOST: '${POSTGRES_HOST}'
-      POSTGRES_POST: '${POSTGRES_POST}'
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
       - ./data/postgres/:/var/lib/postgresql/data
-  
+
   hk_migrate:
     build:
       context: ./backend
@@ -25,7 +19,10 @@ services:
     env_file:
       - .env
     command: >
-      bach -c "python manage.py migrate"
+      bash -c "python manage.py migrate"
+    depends_on:
+      hk_db:
+        condition: service_completed_successfully
 
   hk_backend:
     container_name: hakaton_2025_back
@@ -33,23 +30,57 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: sh -c "python manage.py runserver 0.0.0.0:6000"
+    command: sh -c "python manage.py runserver 0.0.0.0:8001"
     volumes:
       - ./backend:/home/backend
     ports:
-      - "6000:6000"
+      - "8001:8001"
     env_file:
       - .env
-    environment:
-      - POSTGRES_HOST=db
-#    depends_on:
-#      - db
-#      - redis
-#
-#  hk_fronted:
-#    container_name: hakaton_2025_front
-#    restart: always
-#
-#  hk_ai:
-#    container_name: hakatok_2025_ai
-#    restart: always
+    depends_on:
+      hk_db:
+        condition: service_completed_successfully
+      hk_migrate:
+        condition: service_completed_successfully
+      hk_redis:
+        condition: service_completed_successfully
+
+  hk_redis:
+    container_name: hakaton_2025_redis
+    image: redis:alpine
+    restart: always
+
+  hk_frontend:
+    container_name: hakaton_2025_front
+    restart: always
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./frontend:/home/frontend
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      hk_backend:
+        condition: service_completed_successfully
+
+  hk_celery_worker:
+    container_name: hakaton_2025_celery_worker
+    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: sh -c "celery -A src worker -l info"
+    volumes:
+      - ./backend:/home/backend
+    env_file:
+      - .env
+    depends_on:
+      hk_db:
+        condition: service_completed_successfully
+      hk_migrate:
+        condition: service_completed_successfully
+      hk_redis:
+        condition: service_completed_successfully
