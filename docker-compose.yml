@@ -1,7 +1,7 @@
 services:
   hk_db:
     container_name: hakaton_2025_db
-    image: postgres:13.3
+    image: postgres:latest
     restart: always
     hostname: postgres
     env_file:
@@ -18,11 +18,10 @@ services:
     container_name: hakaton_2025_migrate
     env_file:
       - .env
-    command: >
-      bash -c "python manage.py migrate"
+    command: sh -c "python manage.py migrate"
     depends_on:
       hk_db:
-        condition: service_completed_successfully
+        condition: service_started
 
   hk_backend:
     container_name: hakaton_2025_back
@@ -39,32 +38,16 @@ services:
       - .env
     depends_on:
       hk_db:
-        condition: service_completed_successfully
+        condition: service_started
       hk_migrate:
         condition: service_completed_successfully
       hk_redis:
-        condition: service_completed_successfully
+        condition: service_started
 
   hk_redis:
     container_name: hakaton_2025_redis
     image: redis:alpine
     restart: always
-
-  hk_frontend:
-    container_name: hakaton_2025_front
-    restart: always
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    command: sh -c "npm install && npm run dev"
-    volumes:
-      - ./frontend:/home/frontend
-      - /app/node_modules
-    ports:
-      - "3000:3000"
-    depends_on:
-      hk_backend:
-        condition: service_completed_successfully
 
   hk_celery_worker:
     container_name: hakaton_2025_celery_worker
@@ -83,4 +66,20 @@ services:
       hk_migrate:
         condition: service_completed_successfully
       hk_redis:
+        condition: service_started
+
+  hk_frontend:
+    container_name: hakaton_2025_front
+    restart: always
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./frontend:/home/frontend
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      hk_backend:
         condition: service_completed_successfully
