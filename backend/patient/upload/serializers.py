@@ -13,16 +13,15 @@ class ScanCreateSerializer(serializers.Serializer):
 
 
 class ScanUploadChunkedSerializersss(ChunkedUploadSerializer):
+    viewname = "scan-upload-detail"
 
     class Meta(ChunkedUploadSerializer.Meta):
         model = ScanUploadChunked
 
 
 class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
-    scan = serializers.JSONField(default={"file": "Name"})
-
-    class Meta(ChunkedUploadSerializer.Meta):
-        model = ScanUploadChunked
+    scan = serializers.JSONField()
+    viewname = "scan-upload-detail"
 
     def create(self, validated_data):
         scan_data = validated_data.pop("scan")

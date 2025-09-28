@@ -44,7 +44,7 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
 
     name = models.CharField(verbose_name="Название", max_length=255)
     file = models.FileField(
-        verbose_name="Файл", upload_to="uploads/scan", editable=False
+        verbose_name="Файл", upload_to="uploads/scan"
     )
     status = models.CharField(
         verbose_name="Статус",
@@ -55,7 +55,6 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
     markup_file = models.FileField(
         verbose_name="Файл разметки",
         upload_to="uploads/markup",
-        editable=False,
         null=True,
         blank=True,
     )

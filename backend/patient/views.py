@@ -1,3 +1,4 @@
+from django.views.generic import TemplateView
 from rest_framework import viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 
@@ -33,3 +34,7 @@ class ScanViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
+
+
+class HomeView(TemplateView):
+    template_name = "patient/home.html"
