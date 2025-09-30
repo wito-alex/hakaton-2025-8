@@ -1,6 +1,20 @@
 from rest_framework import serializers
 
-from .models import Scan
+from .models import DicomInfo, Scan, Slice
+
+
+class SliceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Slice
+        fields = "__all__"
+
+
+class DicomInfoSerializer(serializers.ModelSerializer):
+    slices = SliceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = DicomInfo
+        fields = ["id", "scan", "file_name", "slices"]
 
 
 class ScanSerializer(serializers.ModelSerializer):

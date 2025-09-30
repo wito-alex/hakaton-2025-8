@@ -2,10 +2,39 @@ from django.views.generic import TemplateView
 from rest_framework import viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 
-from .models import Scan
-from .serializers import ScanCreateUpdateSerializer, ScanSerializer
+from .filters import DicomInfoFilter, SliceFilter
+from .models import DicomInfo, Scan, Slice
+from .serializers import (
+    DicomInfoSerializer,
+    ScanCreateUpdateSerializer,
+    ScanSerializer,
+    SliceSerializer,
+)
+
+
+class DicomInfoViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for viewing DicomInfo.
+    """
+
+    queryset = DicomInfo.objects.all().prefetch_related("slices")
+    serializer_class = DicomInfoSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = DicomInfoFilter
+
+
+class SliceViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for viewing Slices.
+    """
+
+    queryset = Slice.objects.all()
+    serializer_class = SliceSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SliceFilter
 
 
 class ScanViewSet(viewsets.ModelViewSet):
