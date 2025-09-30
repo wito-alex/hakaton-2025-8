@@ -29,8 +29,6 @@ class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
         model = ScanUploadChunked
 
     def create(self, validated_data):
-        scan_data = validated_data.pop("scan")
-
-        scan = Scan.objects.get(id=scan_data)
-            # scan = Scan.objects.create(**scan_data)
+        scan = Scan.objects.create()
+        validated_data.pop('scan', None)
         return ScanUploadChunked.objects.create(scan=scan, **validated_data)

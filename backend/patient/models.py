@@ -17,7 +17,6 @@ class MixinUpdateAt(models.Model):
 
 
 class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
-    objects = models.Manager()
     class StatusType(models.TextChoices):
         preparing_for_viewing = (
             "preparing_for_viewing",
@@ -44,6 +43,8 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
         SUCCESS = "Success", "Успешно"
         FAILURE = "Failure", "Ошибка"
 
+    objects = models.Manager()
+
     name = models.CharField(verbose_name="Название", max_length=255)
     file = models.FileField(
         verbose_name="Файл", upload_to="uploads/scan", blank=True, null=True
@@ -67,10 +68,10 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
         max_length=50,
     )
     study_uid = models.CharField(
-        verbose_name="Уникальный идентификатор исследования", max_length=255
+        verbose_name="Уникальный идентификатор исследования", max_length=255, blank=True, null=True
     )
     series_uid = models.CharField(
-        verbose_name="Уникальный идентификатор серии", max_length=255
+        verbose_name="Уникальный идентификатор серии", max_length=255, blank=True, null=True
     )
     path_to_study = models.CharField(
         verbose_name="Путь к исследованию", max_length=255, null=True, blank=True
