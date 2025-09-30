@@ -27,11 +27,6 @@
         <div class="space-y-4">
             <h3 class="text-lg font-medium text-gray-700">Upload Scan</h3>
             <div>
-                <label for="scanIdInput" class="block text-sm font-medium text-gray-700">Scan ID to associate with:</label>
-                <input type="number" id="scanIdInput" value="1" class="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm">
-            </div>
-
-            <div>
                  <label class="block text-sm font-medium text-gray-700">File to upload</label>
                 <input type="file" id="fileInput" class="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
             </div>
@@ -145,16 +140,9 @@
         });
 
         async function startUpload(file, md5) {
-            const scanId = scanIdInput.value;
-            if (!scanId) {
-                progressDiv.innerText = 'Scan ID is required.';
-                return;
-            }
-
             const totalSize = file.size;
             let start = 0;
             let uploadUrl = UPLOAD_URL; // First request goes to the base URL
-            let isFirstChunk = true;
 
             try {
                 while (start < totalSize) {
@@ -167,11 +155,6 @@
                     const formData = new FormData();
                     formData.append('file', chunk);
                     formData.append('filename', file.name);
-
-                    // Add scan ID only to the first chunk's request
-                    if (isFirstChunk) {
-                        formData.append('scan', scanId);
-                    }
 
                     const chunkResponse = await fetch(uploadUrl, {
                         method: 'PUT',
@@ -189,7 +172,6 @@
 
                     const responseData = await chunkResponse.json();
                     uploadUrl = responseData.url; // Use the new URL for subsequent chunks
-                    isFirstChunk = false;
                     start = end;
                 }
 
