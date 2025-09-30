@@ -1,5 +1,3 @@
-from http.client import HTTPException
-
 from rest_framework import serializers
 
 from drf_chunked_upload.serializers import ChunkedUploadSerializer
@@ -30,5 +28,5 @@ class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
 
     def create(self, validated_data):
         scan = Scan.objects.create()
-        validated_data.pop('scan', None)
+        validated_data.pop("scan", None)
         return ScanUploadChunked.objects.create(scan=scan, **validated_data)

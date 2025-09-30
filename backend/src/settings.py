@@ -27,7 +27,9 @@ if os.path.exists(os.path.join(BASE_DIR, ".env")):
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env.str("SECRET_KEY", default="74ff60ad85bba8bdb7e57d8f8ca98cd2710013cf682004c9")
+SECRET_KEY = env.str(
+    "SECRET_KEY", default="74ff60ad85bba8bdb7e57d8f8ca98cd2710013cf682004c9"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=True)
@@ -45,6 +47,7 @@ INSTALL_PACKAGE_APPS = [
     "rest_framework",
     "drf_spectacular",
     "corsheaders",
+    "django_filters",
 ]
 
 
@@ -195,4 +198,3 @@ DRF_CHUNKED_UPLOAD_MIN_BYTES = 0
 DRF_CHUNKED_UPLOAD_MAX_BYTES = 5 * 1024 * 1024 * 1024  # max size of 5 GB
 DRF_CHUNKED_ALLOWED_MIMETYPES = ["image/zip"]
 DRF_CHUNKED_UPLOAD_COMPLETE_EXT = ".zip"
-

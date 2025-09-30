@@ -15,7 +15,6 @@ class MixinUpdateAt(models.Model):
         abstract = True
 
 
-
 class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
     class StatusType(models.TextChoices):
         preparing_for_viewing = (
@@ -68,10 +67,16 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
         max_length=50,
     )
     study_uid = models.CharField(
-        verbose_name="Уникальный идентификатор исследования", max_length=255, blank=True, null=True
+        verbose_name="Уникальный идентификатор исследования",
+        max_length=255,
+        blank=True,
+        null=True,
     )
     series_uid = models.CharField(
-        verbose_name="Уникальный идентификатор серии", max_length=255, blank=True, null=True
+        verbose_name="Уникальный идентификатор серии",
+        max_length=255,
+        blank=True,
+        null=True,
     )
     path_to_study = models.CharField(
         verbose_name="Путь к исследованию", max_length=255, null=True, blank=True
@@ -99,3 +104,39 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DicomInfo(models.Model):
+    scan = models.ForeignKey(
+        Scan, on_delete=models.CASCADE, related_name="dicom_info", verbose_name="Скан"
+    )
+    file_name = models.CharField(verbose_name="Название файла", max_length=255)
+
+    class Meta:
+        verbose_name = "Диком информация"
+        verbose_name_plural = "Диком информация"
+
+    def __str__(self):
+        return self.file_name
+
+
+class Slice(models.Model):
+    dicom_info = models.ForeignKey(
+        DicomInfo,
+        on_delete=models.CASCADE,
+        related_name="slices",
+        verbose_name="Информация Dicom",
+    )
+    slice_number = models.IntegerField(verbose_name="Номер среза")
+    image = models.ImageField(
+        verbose_name="Фото среза", upload_to="uploads/slices/", blank=True, null=True
+    )
+    probability = models.FloatField(verbose_name="Вероятность", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Срез"
+        verbose_name_plural = "Срезы"
+        ordering = ["slice_number"]
+
+    def __str__(self):
+        return f"Срез {self.slice_number} для {self.dicom_info.file_name}"
