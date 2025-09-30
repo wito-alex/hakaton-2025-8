@@ -20,13 +20,14 @@ class ScanUploadChunkedSerializersss(ChunkedUploadSerializer):
 
 
 class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
-    scan = serializers.JSONField()
+    scan = serializers.PrimaryKeyRelatedField(read_only=True)
     viewname = "upload_details"
 
     class Meta(ChunkedUploadSerializer.Meta):
         model = ScanUploadChunked
 
     def create(self, validated_data):
-        scan = Scan.objects.create()
-        validated_data.pop("scan", None)
+        # Автоматически создаем новый объект Scan при начале загрузки
+        scan = Scan.objects.create(name=validated_data.get('filename'))
+        # Создаем объект чанковой загрузки и связываем его с новым Scan
         return ScanUploadChunked.objects.create(scan=scan, **validated_data)

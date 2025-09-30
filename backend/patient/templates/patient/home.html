@@ -2,21 +2,25 @@
 {% load static i18n %}
 
 {% block content %}
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+/>
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-xl w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+    <div class="max-w-xl w-full space-y-8 bg-white p-10 rounded-xl shadow-lg animate__animated animate__fadeInUp">
         <div>
             <h1 class="text-center text-3xl font-extrabold text-gray-900">
                 Chunked File Upload
             </h1>
         </div>
 
-        <div class="space-y-4 rounded-md shadow-sm">
+        <div id="login-form" class="space-y-4 rounded-md shadow-sm">
             <h3 class="text-lg font-medium text-gray-700 pt-4">Authentication</h3>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <input type="text" id="username" placeholder="Username" value="admin" class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm">
                 <input type="password" id="password" placeholder="Password" value="admin" class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm">
             </div>
-            <button id="loginButton" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <button id="loginButton" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
                 Login
             </button>
             <div id="token-status" class="text-sm text-center font-medium h-5"></div>
@@ -31,10 +35,13 @@
                 <input type="file" id="fileInput" class="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
             </div>
 
-            <button id="uploadButton" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            <button id="uploadButton" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-transform transform hover:scale-105">
                 Upload
             </button>
-            <div id="progress" class="text-sm text-center font-medium text-gray-600 h-5"></div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-linear" style="width: 0%"></div>
+            </div>
+            <div id="progressText" class="text-sm text-center font-medium text-gray-600 h-5"></div>
         </div>
     </div>
 </div>
@@ -47,28 +54,82 @@
     <script type="text/javascript">
         const fileInput = document.getElementById('fileInput');
         const uploadButton = document.getElementById('uploadButton');
-        const progressDiv = document.getElementById('progress');
+        const progressText = document.getElementById('progressText');
+        const progressBar = document.getElementById('progressBar');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
         const loginButton = document.getElementById('loginButton');
         const tokenDiv = document.getElementById('token-status');
-        const scanIdInput = document.getElementById('scanIdInput');
+        const loginForm = document.getElementById('login-form');
 
         const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
         const UPLOAD_URL = '/api/patient/scans/upload/';
         const TOKEN_URL = '/api/token/';
+        const TOKEN_REFRESH_URL = '/api/token/refresh/';
 
         let accessToken = null;
+        let refreshToken = null;
 
+        function triggerAnimation(element, animation) {
+            element.classList.add('animate__animated', animation);
+            element.addEventListener('animationend', () => {
+                element.classList.remove('animate__animated', animation);
+            }, { once: true });
+        }
+
+        // --- TOKEN MANAGEMENT ---
+        function parseJwt(token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function getValidAccessToken() {
+            if (!accessToken) return null;
+
+            const decodedToken = parseJwt(accessToken);
+            const isExpired = decodedToken && decodedToken.exp * 1000 < Date.now();
+
+            if (!isExpired) {
+                return accessToken;
+            }
+
+            // Access token is expired, try to refresh it
+            tokenDiv.innerText = 'Token expired, refreshing...';
+            try {
+                const response = await fetch(TOKEN_REFRESH_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh: refreshToken }),
+                });
+                if (!response.ok) throw new Error('Refresh failed');
+                
+                const data = await response.json();
+                accessToken = data.access;
+                // Note: Some refresh strategies also return a new refresh token.
+                // refreshToken = data.refresh || refreshToken;
+                tokenDiv.innerText = 'Token refreshed successfully!';
+                tokenDiv.style.color = 'blue';
+                return accessToken;
+            } catch (error) {
+                accessToken = null;
+                refreshToken = null;
+                tokenDiv.innerText = 'Session expired. Please log in again.';
+                tokenDiv.style.color = 'red';
+                return null;
+            }
+        }
+
+        // --- LOGIN --- 
         loginButton.addEventListener('click', async () => {
-            const username = usernameInput.value;
-            const password = passwordInput.value;
             tokenDiv.innerText = 'Logging in...';
             try {
                 const response = await fetch(TOKEN_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password }),
+                    body: JSON.stringify({ username: usernameInput.value, password: passwordInput.value }),
                 });
 
                 if (!response.ok) {
@@ -78,16 +139,21 @@
 
                 const data = await response.json();
                 accessToken = data.access;
+                refreshToken = data.refresh;
                 tokenDiv.innerText = 'Logged in successfully!';
                 tokenDiv.style.color = 'green';
+                triggerAnimation(tokenDiv, 'animate__tada');
             } catch (error) {
                 tokenDiv.innerText = `Login failed: ${error.message}`;
                 tokenDiv.style.color = 'red';
+                triggerAnimation(loginForm, 'animate__shakeX');
                 console.error('Login failed:', error);
             }
         });
 
+        // --- UPLOAD LOGIC ---
         const calculateMD5 = (file, callback) => {
+            // ... (MD5 logic remains the same)
             const blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice;
             const chunks = Math.ceil(file.size / CHUNK_SIZE);
             let currentChunk = 0;
@@ -97,7 +163,9 @@
             fileReader.onload = (e) => {
                 spark.append(e.target.result);
                 currentChunk++;
-                progressDiv.innerText = `Calculating MD5: ${Math.round((currentChunk/chunks)*100)}%`;
+                const percent = Math.round((currentChunk/chunks)*100);
+                progressBar.style.width = `${percent}%`;
+                progressText.innerText = `Calculating MD5: ${percent}%`;
                 if (currentChunk < chunks) {
                     loadNextChunk();
                 } else {
@@ -105,9 +173,8 @@
                 }
             };
             fileReader.onerror = () => {
-                console.error('MD5 calculation failed');
-                progressDiv.innerText = 'Error calculating MD5.';
-                progressDiv.style.color = 'red';
+                progressText.innerText = 'Error calculating MD5.';
+                progressText.style.color = 'red';
             };
             const loadNextChunk = () => {
                 const start = currentChunk * CHUNK_SIZE;
@@ -117,24 +184,27 @@
             loadNextChunk();
         };
 
-        uploadButton.addEventListener('click', () => {
-            if (!accessToken) {
-                progressDiv.innerText = 'Please log in first.';
-                progressDiv.style.color = 'orange';
+        uploadButton.addEventListener('click', async () => {
+            const validToken = await getValidAccessToken();
+            if (!validToken) {
+                progressText.innerText = 'Please log in first.';
+                progressText.style.color = 'orange';
                 return;
             }
             const file = fileInput.files[0];
             if (!file) {
-                progressDiv.innerText = 'Please select a file.';
-                progressDiv.style.color = 'orange';
+                progressText.innerText = 'Please select a file.';
+                progressText.style.color = 'orange';
                 return;
             }
-
-            progressDiv.innerText = 'Calculating MD5 checksum...';
-            progressDiv.style.color = 'black';
+            progressText.innerText = 'Calculating MD5 checksum...';
+            progressText.style.color = 'black';
+            progressBar.style.width = '0%';
+            progressBar.classList.remove('bg-green-500');
+            progressBar.classList.add('bg-indigo-600');
 
             calculateMD5(file, (md5) => {
-                progressDiv.innerText = `MD5: ${md5}. Starting upload...`;
+                progressText.innerText = `MD5: ${md5}. Starting upload...`;
                 startUpload(file, md5);
             });
         });
@@ -142,25 +212,30 @@
         async function startUpload(file, md5) {
             const totalSize = file.size;
             let start = 0;
-            let uploadUrl = UPLOAD_URL; // First request goes to the base URL
+            let uploadUrl = UPLOAD_URL;
 
             try {
                 while (start < totalSize) {
                     const end = Math.min(start + CHUNK_SIZE, totalSize);
                     const chunk = file.slice(start, end);
                     const contentRange = `bytes ${start}-${end - 1}/${totalSize}`;
-
-                    progressDiv.innerText = `Uploading chunk... ${Math.round((end/totalSize)*100)}%`;
+                    
+                    const percent = Math.round((end/totalSize)*100);
+                    progressBar.style.width = `${percent}%`;
+                    progressText.innerText = `Uploading... ${percent}%`;
 
                     const formData = new FormData();
                     formData.append('file', chunk);
                     formData.append('filename', file.name);
 
+                    const currentAccessToken = await getValidAccessToken();
+                    if (!currentAccessToken) throw new Error("Session expired.");
+
                     const chunkResponse = await fetch(uploadUrl, {
                         method: 'PUT',
                         headers: {
                             'Content-Range': contentRange,
-                            'Authorization': `Bearer ${accessToken}`,
+                            'Authorization': `Bearer ${currentAccessToken}`,
                         },
                         body: formData,
                     });
@@ -171,17 +246,19 @@
                     }
 
                     const responseData = await chunkResponse.json();
-                    uploadUrl = responseData.url; // Use the new URL for subsequent chunks
+                    uploadUrl = responseData.url;
                     start = end;
                 }
 
-                // Finalize upload
-                progressDiv.innerText = 'Finalizing upload...';
-                const finalResponse = await fetch(uploadUrl, { // Use the last received URL
+                progressText.innerText = 'Finalizing upload...';
+                const finalAccessToken = await getValidAccessToken();
+                if (!finalAccessToken) throw new Error("Session expired.");
+
+                const finalResponse = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`,
+                        'Authorization': `Bearer ${finalAccessToken}`,
                     },
                     body: JSON.stringify({ md5: md5 }),
                 });
@@ -191,14 +268,16 @@
                     throw new Error(`Finalization failed: ${JSON.stringify(errorData)}`);
                 }
 
-                const finalData = await finalResponse.json();
-                progressDiv.innerText = 'Upload complete!';
-                progressDiv.style.color = 'green';
-                console.log('Final response:', finalData);
+                progressBar.classList.remove('bg-indigo-600');
+                progressBar.classList.add('bg-green-500');
+                progressText.innerText = 'Upload complete!';
+                progressText.style.color = 'green';
+                triggerAnimation(progressText, 'animate__tada');
 
             } catch (error) {
-                progressDiv.innerText = `Error: ${error.message}`;
-                progressDiv.style.color = 'red';
+                progressBar.style.width = '0%';
+                progressText.innerText = `Error: ${error.message}`;
+                progressText.style.color = 'red';
                 console.error('Upload failed:', error);
             }
         }
