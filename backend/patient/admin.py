@@ -79,14 +79,6 @@ class DicomInfoAdmin(admin.ModelAdmin):
 
 @admin.register(Slice)
 class SliceAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "dicom_info", "slice_number", "image_preview")
+    list_display = ("__str__", "dicom_info", "slice_number",)
     list_filter = ("dicom_info",)
     search_fields = ("dicom_info__file_name",)
-    readonly_fields = ("image_preview",)
-
-    def image_preview(self, obj):
-        if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" width="150" />')
-        return "-"
-
-    image_preview.short_description = "Предпросмотр"
