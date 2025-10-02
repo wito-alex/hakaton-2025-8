@@ -28,8 +28,8 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
     objects = models.Manager()
 
     name = models.CharField(verbose_name="Название", max_length=255)
-    file = models.FileField(
-        verbose_name="Файл", upload_to="uploads/scan", blank=True, null=True
+    path_to_study = models.FileField(
+        verbose_name="Путь к исследованию", upload_to="uploads/scan", blank=True, null=True
     )
     markup_file = models.FileField(
         verbose_name="Файл разметки",
@@ -50,13 +50,7 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
         null=True,
     )
     series_uid = models.CharField(
-        verbose_name="Уникальный идентификатор серии",
-        max_length=255,
-        blank=True,
-        null=True,
-    )
-    path_to_study = models.CharField(
-        verbose_name="Путь к исследованию", max_length=255, null=True, blank=True
+        verbose_name="Уникальный идентификатор серии", max_length=255, blank=True, null=True
     )
     probability_of_pathology = models.FloatField(
         verbose_name="Вероятность патологии", null=True, blank=True

@@ -29,4 +29,4 @@ class ScanSerializer(serializers.ModelSerializer):
 class ScanCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Scan
-        fields = ("name", "file", "markup_file")
+        fields = ("name", "path_to_study", "markup_file")
