@@ -2,13 +2,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .upload.views import ScanUploadChunkedView
-from .views import (
-    DicomInfoViewSet,
-    ExportScansExcelView,
-    HomeView,
-    ScanViewSet,
-    SliceViewSet,
-)
+from .views import (DicomInfoViewSet, ExportScansExcelView, HomeView,
+                    ScanViewSet, SliceViewSet)
 
 router = DefaultRouter()
 router.register(r"scans", ScanViewSet)

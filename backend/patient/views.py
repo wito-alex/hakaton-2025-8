@@ -1,22 +1,17 @@
+from django.http import HttpResponse
 from django.views.generic import TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from openpyxl import Workbook
 from rest_framework import viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 
-from django.http import HttpResponse
-from openpyxl import Workbook
 from .filters import DicomInfoFilter, SliceFilter
 from .models import DicomInfo, Scan, Slice
-from .serializers import (
-    DicomInfoSerializer,
-    ScanCreateUpdateSerializer,
-    ScanSerializer,
-    SliceSerializer,
-)
+from .serializers import (DicomInfoSerializer, ScanCreateUpdateSerializer,
+                          ScanSerializer, SliceSerializer)
 
 
 @extend_schema(
@@ -32,21 +27,21 @@ from .serializers import (
     """,
     parameters=[
         OpenApiParameter(
-            name='scan_ids',
-            type={'type': 'array', 'items': {'type': 'integer'}},
+            name="scan_ids",
+            type={"type": "array", "items": {"type": "integer"}},
             location=OpenApiParameter.QUERY,
             required=True,
-            description='Список ID сканов для экспорта.'
+            description="Список ID сканов для экспорта.",
         )
     ],
     responses={
         200: OpenApiTypes.BINARY,
         400: OpenApiTypes.STR,
-    }
+    },
 )
 class ExportScansExcelView(APIView):
     def post(self, request, *args, **kwargs):
-        scan_ids = request.query_params.getlist('scan_ids')
+        scan_ids = request.query_params.getlist("scan_ids")
         if not scan_ids:
             return HttpResponse("No scan IDs provided", status=400)
 
@@ -68,7 +63,11 @@ class ExportScansExcelView(APIView):
         sheet.append(headers)
 
         for scan in scans:
-            full_url = request.build_absolute_uri(scan.path_to_study.url) if scan.path_to_study else ""
+            full_url = (
+                request.build_absolute_uri(scan.path_to_study.url)
+                if scan.path_to_study
+                else ""
+            )
             row = [
                 full_url,
                 scan.study_uid,

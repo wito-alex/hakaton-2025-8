@@ -105,7 +105,7 @@
                     body: JSON.stringify({ refresh: refreshToken }),
                 });
                 if (!response.ok) throw new Error('Refresh failed');
-                
+
                 const data = await response.json();
                 accessToken = data.access;
                 // Note: Some refresh strategies also return a new refresh token.
@@ -122,7 +122,7 @@
             }
         }
 
-        // --- LOGIN --- 
+        // --- LOGIN ---
         loginButton.addEventListener('click', async () => {
             tokenDiv.innerText = 'Logging in...';
             try {
@@ -219,7 +219,7 @@
                     const end = Math.min(start + CHUNK_SIZE, totalSize);
                     const chunk = file.slice(start, end);
                     const contentRange = `bytes ${start}-${end - 1}/${totalSize}`;
-                    
+
                     const percent = Math.round((end/totalSize)*100);
                     progressBar.style.width = `${percent}%`;
                     progressText.innerText = `Uploading... ${percent}%`;

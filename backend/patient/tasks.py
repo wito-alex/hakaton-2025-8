@@ -1,11 +1,7 @@
-import time
 import requests
-from pathlib import Path
-
-from django.core.files import File
-
 from src.celery import app
-from .models import Scan, DicomInfo, Slice
+
+from .models import Scan
 
 AI_SERVICE_URL = "http://hk_ai:8000/api/predict"
 
@@ -25,7 +21,9 @@ def process_scan_with_ai(scan_id):
 
         # --- Вызов реального AI-сервиса ---
         print(f"Sending file path to AI service: {scan.path_to_study.path}")
-        response = requests.post(AI_SERVICE_URL, params={"path": scan.path_to_study.path})
+        response = requests.post(
+            AI_SERVICE_URL, params={"path": scan.path_to_study.path}
+        )
         response.raise_for_status()  # Вызовет исключение для кодов 4xx/5xx
         ai_response = response.json()
         print("AI processing finished. Parsing results...")
@@ -53,9 +51,10 @@ def process_scan_with_ai(scan_id):
         print(f"Error processing scan_id: {scan_id}. Error: {e}")
         try:
             scan = Scan.objects.get(id=scan_id)
-            scan.work_ai_status = Scan.WorkType.in_work # Возвращаем в исходное для повторной попытки
+            scan.work_ai_status = (
+                Scan.WorkType.in_work
+            )  # Возвращаем в исходное для повторной попытки
             scan.processing_status = Scan.ProcessingStatusType.FAILURE
             scan.save()
         except Scan.DoesNotExist:
-            pass # нечего обновлять, если скан не найден
-
+            pass  # нечего обновлять, если скан не найден

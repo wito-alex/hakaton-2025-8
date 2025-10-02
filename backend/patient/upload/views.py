@@ -1,11 +1,12 @@
+from drf_chunked_upload.views import ChunkedUploadView
+from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
+                                   extend_schema)
+from patient.tasks import process_scan_with_ai
 from rest_framework import permissions
 
-from drf_chunked_upload.views import ChunkedUploadView
-from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
-
-from patient.tasks import process_scan_with_ai
 from .models import ScanUploadChunked
-from .serializers import ScanUploadChunkedSerializer, ScanUploadChunkedSerializersss
+from .serializers import (ScanUploadChunkedSerializer,
+                          ScanUploadChunkedSerializersss)
 
 
 class ScanUploadChunkedView(ChunkedUploadView):
