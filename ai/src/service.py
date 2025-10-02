@@ -8,9 +8,7 @@ service = AppService()
 
 
 @router.post('/predict')
-def predict(
-        path: str,
-        service: AppService = service):
+def predict(path: str):
     result = service.predict(path)
     return result
 
