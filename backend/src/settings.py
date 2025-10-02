@@ -189,6 +189,24 @@ SPECTACULAR_SETTINGS = {
 # CORS settings for development
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS",default= [])
+
+CORS_ALLOW_HEADERS = [
+    'content-range',
+    'content-type',
+    'authorization',
+    'x-requested-with',
+]
+
+# Разрешить методы
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
 
 
 # Chunked Upload
@@ -198,3 +216,12 @@ DRF_CHUNKED_UPLOAD_MIN_BYTES = 0
 DRF_CHUNKED_UPLOAD_MAX_BYTES = 5 * 1024 * 1024 * 1024  # max size of 5 GB
 DRF_CHUNKED_ALLOWED_MIMETYPES = ["image/zip"]
 DRF_CHUNKED_UPLOAD_COMPLETE_EXT = ".zip"
+
+# CELERY SETTINGS
+# ------------------------------------------------------------------------------
+CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", "redis://hk_redis:6379/0")
+CELERY_RESULT_BACKEND = env.str("CELERY_RESULT_BACKEND", "redis://hk_redis:6379/0")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
