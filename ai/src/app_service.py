@@ -1,3 +1,5 @@
+import os
+
 import torch
 import numpy as np
 from src.model import AE
@@ -13,11 +15,14 @@ import json
 INPUT_SIZE = 512
 WEIGHTS_PATH = 'weights/model_1.3.4_10.pth'
 
+if os.path.exists(WEIGHTS_PATH):
+    print("Файл есть")
+
 transform = get_transform(target_size=INPUT_SIZE)
 criterion = AELoss(anomaly_score=True, keepdim=False)
 
 model = AE(input_size=INPUT_SIZE)
-weights = torch.load(WEIGHTS_PATH)
+weights = torch.load(WEIGHTS_PATH, weights_only=False)
 model.load_state_dict(weights)
 model.eval()
 print('Model weights loaded')
