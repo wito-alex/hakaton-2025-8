@@ -11,7 +11,7 @@ import json
 
 
 INPUT_SIZE = 512
-WEIGHTS_PATH = 'ai/weights/model_1.3.4_10.pth'
+WEIGHTS_PATH = 'weights/model_1.3.4_10.pth'
 
 transform = get_transform(target_size=INPUT_SIZE)
 criterion = AELoss(anomaly_score=True, keepdim=False)
