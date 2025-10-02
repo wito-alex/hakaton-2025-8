@@ -1,7 +1,7 @@
 numpy
 pydicom
 opencv-python
-torch
+torch==2.8.0
 pandas
 torchvision
 fastapi
