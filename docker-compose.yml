@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./data/postgres/:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
   hk_migrate:
     build:
@@ -109,3 +109,6 @@ services:
     depends_on:
       hk_backend:
         condition: service_started
+
+volumes:
+  postgres_data:
