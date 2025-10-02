@@ -63,7 +63,7 @@ const loadExcel = (id) => {
   const formData = new FormData()
   formData.append('id', id)
   
-  fetch(`http://0.0.0.0:8001/api/patient/scans/export/?scan_ids=${id}`, {
+  fetch(`http://45.144.179.106/api/patient/scans/export/?scan_ids=${id}`, {
     method: "POST"
   })
     .then((res) => res.blob())
@@ -75,7 +75,7 @@ const loadExcel = (id) => {
 async function downloadExcel(id) {
       try {
     
-       const response = await fetch(`http://0.0.0.0:8001/api/patient/scans/export/?scan_ids=${id}`, {
+       const response = await fetch(`http://45.144.179.106/api/patient/scans/export/?scan_ids=${id}`, {
           method: 'POST'
        });
   
@@ -305,7 +305,7 @@ export const columns: ColumnDef<Study>[] = [
 const History = () => {
   const [researches, setResearches] = useState([]);
   useEffect(() => {
-    fetch("http://0.0.0.0:8001/api/patient/scans/", {
+    fetch("http://45.144.179.106/api/patient/scans/", {
       method: "GET",
     })
       .then((res) => res.json())
