@@ -1,7 +1,5 @@
 from django.db import models
-
 from drf_chunked_upload.models import ChunkedUpload
-
 from patient.models import Scan
 
 

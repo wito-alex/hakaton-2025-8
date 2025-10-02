@@ -1,10 +1,12 @@
+from drf_chunked_upload.views import ChunkedUploadView
+from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
+                                   extend_schema)
+from patient.tasks import process_scan_with_ai
 from rest_framework import permissions
 
-from drf_chunked_upload.views import ChunkedUploadView
-from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
-
 from .models import ScanUploadChunked
-from .serializers import ScanUploadChunkedSerializer, ScanUploadChunkedSerializersss
+from .serializers import (ScanUploadChunkedSerializer,
+                          ScanUploadChunkedSerializersss)
 
 
 class ScanUploadChunkedView(ChunkedUploadView):
@@ -55,5 +57,8 @@ class ScanUploadChunkedView(ChunkedUploadView):
         scan_instance.path_to_study = chunked_upload.file
         scan_instance.name = chunked_upload.file.name
         scan_instance.save(update_fields=["path_to_study", "name"])
+
+        # Запускаем обработку AI сразу после завершения загрузки
+        process_scan_with_ai.delay(scan_instance.id)
 
         return data
