@@ -1,19 +1,14 @@
 from django.views.generic import TemplateView
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.response import Response
-
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets
+from rest_framework.parsers import FormParser, MultiPartParser
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
+from rest_framework.views import APIView
 
 from django.http import HttpResponse
 from openpyxl import Workbook
-from rest_framework.views import APIView
-
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from drf_spectacular.types import OpenApiTypes
-
 from .filters import DicomInfoFilter, SliceFilter
 from .models import DicomInfo, Scan, Slice
 from .serializers import (
