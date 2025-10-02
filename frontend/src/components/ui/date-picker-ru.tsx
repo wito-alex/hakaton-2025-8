@@ -62,13 +62,13 @@ export function DatePickerRu() {
   };
 
   return (
-    <div className="relative w-[180px]">
+    <div className="relative">
       <Input
         type="text"
         value={inputValue}
         onChange={handleInputChange}
         placeholder="дд.мм.гггг"
-        className="w-full pr-10 pl-3 text-left font-normal"
+        className="w-full pr-10 pl-3 text-left font-normal flex-1"
         maxLength={10}
       />
       <Popover>
