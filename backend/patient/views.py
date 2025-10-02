@@ -143,26 +143,6 @@ class ScanViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
-    @action(detail=True, methods=['post'])
-    def process_with_ai(self, request, pk=None):
-        """
-        Запускает асинхронную задачу обработки скана с помощью AI.
-        """
-        try:
-            scan = self.get_object()
-            if not scan.file:
-                return Response({'error': 'Scan has no file to process.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Запускаем задачу в Celery
-            process_scan_with_ai.delay(scan.id)
-
-            scan.work_ai_status = Scan.WorkType.in_work
-            scan.save()
-
-            return Response({'status': 'AI processing started'}, status=status.HTTP_202_ACCEPTED)
-        except Scan.DoesNotExist:
-            return Response({'error': 'Scan not found.'}, status=status.HTTP_404_NOT_FOUND)
-
 
 class HomeView(TemplateView):
     template_name = "patient/home.html"

@@ -54,6 +54,16 @@ services:
       hk_create_superuser:
         condition: service_completed_successfully
 
+  hk_ai:
+    container_name: hakaton_2025_ai
+    build:
+      context: .
+      dockerfile: ai/Dockerfile
+    volumes:
+      - ./backend/media:/home/backend/media  # Общий том для доступа к файлам
+    ports:
+      - "8002:8000"
+
   hk_redis:
     container_name: hakaton_2025_redis
     image: redis:alpine
@@ -65,7 +75,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: sh -c "celery -A src worker -l info"
+    command: sh -c "celery -A src worker -l info --concurrency=1"
     volumes:
       - ./backend:/home/backend
     env_file:
