@@ -30,7 +30,7 @@ const Login = () => {
        formData.append("username", e.target[0].value);
        formData.append("password", e.target[1].value);
 
-      fetch("http://45.144.179.106/api/token/", {
+      fetch("http://45.144.179.106:8001/api/token/", {
         method: "POST",
         headers: {
           Accept: "application/json, text/plain, */*",
