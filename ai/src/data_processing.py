@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pydicom
-import cv2
 import pandas as pd
 import uuid
 from pydicom.errors import InvalidDicomError 
