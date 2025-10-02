@@ -17,7 +17,7 @@ transform = get_transform(target_size=INPUT_SIZE)
 criterion = AELoss(anomaly_score=True, keepdim=False)
 
 model = AE(input_size=INPUT_SIZE)
-weights = torch.load(WEIGHTS_PATH)
+weights = torch.load(WEIGHTS_PATH, weights_only=True)
 model.load_state_dict(weights)
 model.eval()
 print('Model weights loaded')
