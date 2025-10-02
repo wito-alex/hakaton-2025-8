@@ -1,10 +1,10 @@
 import torch
 import numpy as np
-from ai.src.model import AE
-from ai.src.data_processing import preprocess_ct
+from src.model import AE
+from src.data_processing import preprocess_ct
 from time import time
-from ai.src.transforms import get_transform
-from ai.src.criterion import AELoss
+from src.transforms import get_transform
+from src.criterion import AELoss
 import uuid
 import json
 

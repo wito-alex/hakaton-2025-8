@@ -1,4 +1,4 @@
-from ai.src.predict import predict
+from src.predict import predict
 from pprint import pprint
 
 

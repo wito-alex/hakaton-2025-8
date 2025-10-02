@@ -1,6 +1,6 @@
 import numpy as np
-from ai.src.app_service import AppService
-from ai.src.routers import router
+from src.app_service import AppService
+from src.routers import router
 import json
 
 
