@@ -16,23 +16,6 @@ class MixinUpdateAt(models.Model):
 
 
 class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
-    class StatusType(models.TextChoices):
-        preparing_for_viewing = (
-            "preparing_for_viewing",
-            "Подготовка к просмотру:#3F391A:#EEE6BE",
-        )
-        ready_to_watch = "ready_to_watch", "Готов к просмотру:#0078E7:#BED7EE"
-        ai_processing_completed = (
-            "ai_processing_completed",
-            "Завершена обработка ИИ:#057306:#D7FCD7",
-        )
-        in_processing = "in_processing", "В обработке ИИ:#381BEB:#ECE9FD"
-        viewed = "viewed", "Просмотрен:#6D06C6:#F3E8FF"
-        adjusted_by_user = (
-            "adjusted_by_user",
-            "Скорректирован пользователем:#8B7500:#FEF8C3",
-        )
-
     class WorkType(models.TextChoices):
         in_work = "in_work", "В работе"
         in_processing = "in_processing", "В обработке"
@@ -47,12 +30,6 @@ class Scan(MixinCreateAt, MixinUpdateAt, models.Model):
     name = models.CharField(verbose_name="Название", max_length=255)
     file = models.FileField(
         verbose_name="Файл", upload_to="uploads/scan", blank=True, null=True
-    )
-    status = models.CharField(
-        verbose_name="Статус",
-        choices=StatusType.choices,
-        default=StatusType.preparing_for_viewing,
-        max_length=50,
     )
     markup_file = models.FileField(
         verbose_name="Файл разметки",

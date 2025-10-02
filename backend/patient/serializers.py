@@ -18,7 +18,6 @@ class DicomInfoSerializer(serializers.ModelSerializer):
 
 
 class ScanSerializer(serializers.ModelSerializer):
-    status = serializers.CharField(source="get_status_display")
     work_ai_status = serializers.CharField(source="get_work_ai_status_display")
     processing_status = serializers.CharField(source="get_processing_status_display")
 
