@@ -3,7 +3,7 @@ FROM python:3.12-alpine
 WORKDIR /home/ai
 
 # Устанавливаем зависимости
-COPY ai_requirements.txt /home/ai
+COPY ai_requirements.txt /home/ai/
 RUN pip install --no-cache-dir -r ai_requirements.txt
 
 # Копируем код приложения
