@@ -73,8 +73,9 @@ class ExportScansExcelView(APIView):
         sheet.append(headers)
 
         for scan in scans:
+            full_url = request.build_absolute_uri(scan.path_to_study.url) if scan.path_to_study else ""
             row = [
-                scan.path_to_study,
+                full_url,
                 scan.study_uid,
                 scan.series_uid,
                 scan.probability_of_pathology,

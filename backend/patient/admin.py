@@ -8,13 +8,12 @@ from .models import DicomInfo, Scan, Slice
 class AdminScan(admin.ModelAdmin):
     list_display = (
         "name",
-        "status",
         "work_ai_status",
         "processing_status",
         "created_at",
         "updated_at",
     )
-    list_filter = ("status", "work_ai_status", "processing_status")
+    list_filter = ("work_ai_status", "processing_status")
     search_fields = ("name", "study_uid", "series_uid")
     ordering = ("-created_at",)
     readonly_fields = (
@@ -25,10 +24,10 @@ class AdminScan(admin.ModelAdmin):
         "time_of_processing",
     )
     fieldsets = (
-        (None, {"fields": ("name", "file", "markup_file")}),
-        ("Status", {"fields": ("status", "work_ai_status", "processing_status")}),
+        (None, {"fields": ("name", "path_to_study", "markup_file")}),
+        ("Статусы", {"fields": ("work_ai_status", "processing_status")}),
         (
-            "AI Processing Details",
+            "Детали обработки ИИ",
             {
                 "classes": ("collapse",),
                 "fields": (
@@ -39,14 +38,14 @@ class AdminScan(admin.ModelAdmin):
             },
         ),
         (
-            "DICOM Information",
+            "DICOM информация",
             {
                 "classes": ("collapse",),
-                "fields": ("study_uid", "series_uid", "path_to_study"),
+                "fields": ("study_uid", "series_uid"),
             },
         ),
         (
-            "Timestamps",
+            "Временные метки",
             {"classes": ("collapse",), "fields": ("created_at", "updated_at")},
         ),
     )

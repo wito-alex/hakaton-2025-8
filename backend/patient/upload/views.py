@@ -52,8 +52,8 @@ class ScanUploadChunkedView(ChunkedUploadView):
 
         chunked_upload = self.get_object()
         scan_instance = chunked_upload.scan
-        scan_instance.file = chunked_upload.file
+        scan_instance.path_to_study = chunked_upload.file
         scan_instance.name = chunked_upload.file.name
-        scan_instance.save(update_fields=["file", "name"])
+        scan_instance.save(update_fields=["path_to_study", "name"])
 
         return data
