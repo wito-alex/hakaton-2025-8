@@ -63,8 +63,8 @@ services:
   hk_ai:
     container_name: hakaton_2025_ai
     build:
-      context: ./ai
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ai/Dockerfile
     volumes:
       - ./backend/media:/home/backend/media  # Общий том для доступа к файлам
     ports:
