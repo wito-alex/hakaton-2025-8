@@ -19,6 +19,8 @@ services:
     env_file:
       - .env
     command: sh -c "python manage.py migrate"
+    volumes:
+      - ./backend:/home/backend
     depends_on:
       hk_db:
         condition: service_started
@@ -29,6 +31,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     command: sh -c "python manage.py create_default_superuser"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/home/backend
     depends_on:
       hk_migrate:
         condition: service_completed_successfully
@@ -82,7 +88,7 @@ services:
       - .env
     depends_on:
       hk_db:
-        condition: service_completed_successfully
+        condition: service_started
       hk_migrate:
         condition: service_completed_successfully
       hk_redis:
