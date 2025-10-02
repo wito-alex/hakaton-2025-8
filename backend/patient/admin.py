@@ -78,6 +78,10 @@ class DicomInfoAdmin(admin.ModelAdmin):
 
 @admin.register(Slice)
 class SliceAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "dicom_info", "slice_number",)
+    list_display = (
+        "__str__",
+        "dicom_info",
+        "slice_number",
+    )
     list_filter = ("dicom_info",)
     search_fields = ("dicom_info__file_name",)

@@ -1,27 +1,17 @@
-from django.views.generic import TemplateView
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.response import Response
-
-from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
-
 from django.http import HttpResponse
-from openpyxl import Workbook
-from rest_framework.views import APIView
-
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.views.generic import TemplateView
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from openpyxl import Workbook
+from rest_framework import viewsets
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.views import APIView
 
 from .filters import DicomInfoFilter, SliceFilter
 from .models import DicomInfo, Scan, Slice
-from .serializers import (
-    DicomInfoSerializer,
-    ScanCreateUpdateSerializer,
-    ScanSerializer,
-    SliceSerializer,
-)
+from .serializers import (DicomInfoSerializer, ScanCreateUpdateSerializer,
+                          ScanSerializer, SliceSerializer)
 
 
 @extend_schema(
@@ -37,21 +27,21 @@ from .serializers import (
     """,
     parameters=[
         OpenApiParameter(
-            name='scan_ids',
-            type={'type': 'array', 'items': {'type': 'integer'}},
+            name="scan_ids",
+            type={"type": "array", "items": {"type": "integer"}},
             location=OpenApiParameter.QUERY,
             required=True,
-            description='Список ID сканов для экспорта.'
+            description="Список ID сканов для экспорта.",
         )
     ],
     responses={
         200: OpenApiTypes.BINARY,
         400: OpenApiTypes.STR,
-    }
+    },
 )
 class ExportScansExcelView(APIView):
     def post(self, request, *args, **kwargs):
-        scan_ids = request.query_params.getlist('scan_ids')
+        scan_ids = request.query_params.getlist("scan_ids")
         if not scan_ids:
             return HttpResponse("No scan IDs provided", status=400)
 
@@ -73,7 +63,11 @@ class ExportScansExcelView(APIView):
         sheet.append(headers)
 
         for scan in scans:
-            full_url = request.build_absolute_uri(scan.path_to_study.url) if scan.path_to_study else ""
+            full_url = (
+                request.build_absolute_uri(scan.path_to_study.url)
+                if scan.path_to_study
+                else ""
+            )
             row = [
                 full_url,
                 scan.study_uid,
@@ -142,26 +136,6 @@ class ScanViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
-
-    @action(detail=True, methods=['post'])
-    def process_with_ai(self, request, pk=None):
-        """
-        Запускает асинхронную задачу обработки скана с помощью AI.
-        """
-        try:
-            scan = self.get_object()
-            if not scan.file:
-                return Response({'error': 'Scan has no file to process.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Запускаем задачу в Celery
-            process_scan_with_ai.delay(scan.id)
-
-            scan.work_ai_status = Scan.WorkType.in_work
-            scan.save()
-
-            return Response({'status': 'AI processing started'}, status=status.HTTP_202_ACCEPTED)
-        except Scan.DoesNotExist:
-            return Response({'error': 'Scan not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class HomeView(TemplateView):

@@ -1,9 +1,7 @@
-from rest_framework import serializers
-
 from drf_chunked_upload.serializers import ChunkedUploadSerializer
-
 from patient.models import Scan
 from patient.upload.models import ScanUploadChunked
+from rest_framework import serializers
 
 
 class ScanCreateSerializer(serializers.Serializer):
@@ -28,6 +26,6 @@ class ScanUploadChunkedSerializer(ChunkedUploadSerializer):
 
     def create(self, validated_data):
         # Автоматически создаем новый объект Scan при начале загрузки
-        scan = Scan.objects.create(name=validated_data.get('filename'))
+        scan = Scan.objects.create(name=validated_data.get("filename"))
         # Создаем объект чанковой загрузки и связываем его с новым Scan
         return ScanUploadChunked.objects.create(scan=scan, **validated_data)

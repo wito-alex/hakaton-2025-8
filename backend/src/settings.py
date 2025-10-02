@@ -189,23 +189,23 @@ SPECTACULAR_SETTINGS = {
 # CORS settings for development
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS",default= [])
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
 CORS_ALLOW_HEADERS = [
-    'content-range',
-    'content-type',
-    'authorization',
-    'x-requested-with',
+    "content-range",
+    "content-type",
+    "authorization",
+    "x-requested-with",
 ]
 
 # Разрешить методы
 CORS_ALLOW_METHODS = [
-    'GET',
-    'POST',
-    'PUT',
-    'PATCH',
-    'DELETE',
-    'OPTIONS',
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
 ]
 
 
