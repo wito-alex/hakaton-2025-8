@@ -2,3 +2,6 @@ numpy
 pydicom
 opencv-python
 torch
+pandas
+torchvision
+fastapi

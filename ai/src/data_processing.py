@@ -1,6 +1,11 @@
 import os
 import numpy as np
 import pydicom
+import cv2
+import pandas as pd
+import uuid
+from pydicom.errors import InvalidDicomError 
+
 
 def load_dicom_series(path):
     """
@@ -23,6 +28,66 @@ def load_dicom_series(path):
             ds = datasets[1]
             study_uid = ds.StudyInstanceUID
             series_uid = ds.SeriesInstanceUID
+
+            return volume.astype(np.int16), study_uid, series_uid
+        elif len(files) == 1:
+            # elif os.path.isfile(path):
+            ds = pydicom.dcmread(os.path.join(path, files[0]))
+
+            study_uid = ds.StudyInstanceUID
+            series_uid = ds.SeriesInstanceUID
+
+            if hasattr(ds, "NumberOfFrames") and ds.NumberOfFrames > 1:
+                # multiframe dicom
+                volume = ds.pixel_array
+                return volume.astype(np.int16), study_uid, series_uid
+            else:
+                # one slice
+                return ds.pixel_array[np.newaxis, ...].astype(np.int16), study_uid, series_uid
+
+    else:
+        raise ValueError(f"Path {path} does not exist")
+
+
+import os
+import numpy as np
+import pydicom
+
+def load_dicom_series(path):
+    """
+    Load CT image and return numpy pixel array with shape (num_slices, H, W).
+
+    path: path to folder with input DICOM file or files.
+    """
+    if os.path.isdir(path):
+        files = os.listdir(path)
+        if len(files) > 1:
+            dicom_files = [os.path.join(path, f) for f in os.listdir(path)] # if f.endswith(".dcm")]
+            datasets = []
+            for f in dicom_files:
+                if not f.split('/')[-1].startswith('.'):
+                    try:
+                        datasets.append(pydicom.dcmread(f))
+                    except InvalidDicomError:
+                        print(f'Cannot read file {f}: File is missing DICOM File Meta Information header or the DICM prefix is missing from the header. ')
+
+            try:
+                datasets.sort(key=lambda d: int(d.InstanceNumber))
+            except AttributeError:
+                datasets.sort(key=lambda d: float(d.ImagePositionPatient[2]))
+
+            volume = np.stack([ds.pixel_array for ds in datasets])
+            ds = datasets[1]
+            try:
+                study_uid = ds.StudyInstanceUID
+            except AttributeError:
+                # print('FileDataset object has no attribute StudyInstanceUID')
+                study_uid = None
+            try:
+                series_uid = ds.SeriesInstanceUID
+            except AttributeError:
+                # print('FileDataset object has no attribute SeriesInstanceUID')
+                series_uid = None
 
             return volume.astype(np.int16), study_uid, series_uid
         elif len(files) == 1:
@@ -137,10 +202,58 @@ def normalize_hu_zscore(pixels, mean=None, std=None, clip_percentiles=(0.5, 99.5
     return norm
 
 
-def preprocess_ct(path: str):
+# def preprocess_dicom(path: str):
+#     pixels, study_uid, series_uid = load_dicom_series(path)
+#     air, water = find_air_water_peaks_clean(pixels)
+#     hu_pixels = shift_hu(pixels, air, water)
+#     hu_pixels = clip_hu(hu_pixels, hu_min=-1024, hu_max=3000)
+#     return hu_pixels
+
+
+def preprocess_ct(path: str, hu_min=-1024, hu_max=3000, eps=100):
     pixels, study_uid, series_uid = load_dicom_series(path)
+    hu_pixels = pixels
     air, water = find_air_water_peaks_clean(pixels)
-    hu_pixels = shift_hu(pixels, air, water)
-    hu_pixels = clip_hu(hu_pixels, hu_min=-1024, hu_max=3000)
+    hu_pixels = shift_hu(pixels, air, water, eps=eps)
+    hu_pixels = clip_hu(hu_pixels, hu_min=hu_min, hu_max=hu_max)
     normalized_pixels = normalize_hu_minmax(hu_pixels)
     return normalized_pixels, study_uid, series_uid
+    
+
+def load_dicom_and_split2npy(path: str, output_folder: str, df_folder: str, df_name: str, label: int):
+    os.makedirs(output_folder, exist_ok=True)
+    os.makedirs(df_folder, exist_ok=True)
+    data = {
+        'dicom_path': [],
+        'slice_num': [],
+        'study_uid': [],
+        'series_uid': [],
+        'file_uid': [],
+        'filepath': [],
+        'label': []
+    }
+    pixel_array, study_uid, series_uid = preprocess_ct(path)
+    patient_id = os.path.splitext(os.path.basename(path))[0]
+
+    for i in range(pixel_array.shape[0]):
+        image_uuid = str(uuid.uuid4())
+        slice = pixel_array[i]
+        
+        out_path = os.path.join(output_folder, f"{patient_id}_slice_{i:03d}_{image_uuid}.npy")
+        np.save(out_path, slice)
+        data['dicom_path'].append(path)
+        data['slice_num'].append(i)
+        data['study_uid'].append(study_uid)
+        data['series_uid'].append(series_uid)
+        data['file_uid'].append(image_uuid)
+        data['filepath'].append(os.path.join(output_folder, f"{patient_id}_slice_{i:03d}_{image_uuid}.npy"))
+        data['label'].append(label)
+    
+    temp_df = pd.DataFrame(data)
+    if os.path.exists(os.path.join(df_folder, df_name + '.csv')):
+        df = pd.read_csv(os.path.join(df_folder, df_name + '.csv'))
+        df = pd.concat([df, temp_df], ignore_index=True)
+    else:
+        df = temp_df
+    df.to_csv(os.path.join(df_folder, df_name + '.csv'), index=False)
+
