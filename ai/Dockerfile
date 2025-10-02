@@ -4,7 +4,7 @@ WORKDIR /home/ai
 
 # Устанавливаем зависимости
 COPY ai_requirements.txt /home/ai/
-RUN pip install --no-cache-dir -r ai_requirements.txt
+RUN pip install -r ai_requirements.txt
 
 # Копируем код приложения
 COPY . /home/ai
