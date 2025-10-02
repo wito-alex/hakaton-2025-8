@@ -5,7 +5,7 @@ FROM node:20-alpine
 WORKDIR /home/frontend
 
 # Copy package.json and package-lock.json (or yarn.lock)
-COPY package*.json ./
+COPY package*.json /home/frontend/
 
 # Install project dependencies
 RUN npm install
